@@ -1,0 +1,6 @@
+# 运行依赖（Python 3.10+）
+tqsdk>=3.7.0
+numpy>=1.24
+pandas>=2.0
+
+# GUI 参数面板使用标准库 tkinter，无需额外安装

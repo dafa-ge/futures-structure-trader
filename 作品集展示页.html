@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>期货自动交易策略 · 项目说明</title>
+<style>
+  :root{
+    --ink:#1b2430; --sub:#5b6878; --line:#e3e8ef; --bg:#ffffff;
+    --accent:#1f5f8b; --accent-soft:#eef5fa; --warn:#8a6d3b; --warn-soft:#fdf7e9;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:#f3f5f8; color:var(--ink);
+    font-family:"Microsoft YaHei","PingFang SC","Hiragino Sans GB",system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .page{
+    width:1180px; margin:0 auto; background:var(--bg);
+    padding:56px 64px 64px; border-radius:4px;
+    box-shadow:0 1px 3px rgba(20,30,45,.06);
+  }
+  .kicker{font-size:13px; letter-spacing:.18em; color:var(--accent); text-transform:uppercase;}
+  h1{font-size:34px; line-height:1.3; margin:10px 0 14px; font-weight:700;}
+  .lead{font-size:16px; color:var(--sub); line-height:1.85; margin:0;}
+  .rule{height:1px; background:var(--line); margin:34px 0;}
+  h2{font-size:19px; margin:0 0 16px; font-weight:700;}
+  h2 .no{color:var(--accent); margin-right:10px; font-size:15px; letter-spacing:.05em;}
+  p{font-size:14.5px; line-height:1.95; color:#2a3441; margin:0 0 12px;}
+  .muted{color:var(--sub); font-size:13px;}
+
+  /* 架构图 */
+  .flow{display:flex; flex-direction:column; gap:0; margin:6px 0 4px;}
+  .frow{display:flex; gap:14px; justify-content:center;}
+  .node{
+    flex:1; border:1px solid var(--line); border-radius:6px; padding:12px 14px;
+    background:#fafbfd; text-align:center;
+  }
+  .node .t{font-size:14px; font-weight:700; margin-bottom:4px;}
+  .node .d{font-size:12px; color:var(--sub); line-height:1.6;}
+  .node.hi{background:var(--accent-soft); border-color:#cfe1ef;}
+  .node.db{background:#f6f8f6; border-color:#dde7dd;}
+  .arrow{text-align:center; color:#b9c3d0; font-size:15px; line-height:1; padding:7px 0;}
+
+  /* 卡片 */
+  .grid{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+  .card{border:1px solid var(--line); border-radius:6px; padding:16px 18px; background:#fff;}
+  .card .h{font-size:14px; font-weight:700; margin-bottom:8px; display:flex; align-items:center; gap:8px;}
+  .badge{
+    display:inline-block; font-size:11px; padding:2px 7px; border-radius:3px;
+    background:var(--accent-soft); color:var(--accent); font-weight:600;
+  }
+  .card p{font-size:13px; line-height:1.8; margin:0; color:#3a4654;}
+
+  /* 表格 */
+  table{border-collapse:collapse; width:100%; font-size:13.5px; margin:6px 0 4px;}
+  th,td{border-bottom:1px solid var(--line); padding:9px 10px; text-align:left;}
+  th{color:var(--sub); font-weight:600; background:#fafbfc;}
+  td.num{font-variant-numeric:tabular-nums;}
+  .neg{color:#a4463b;} .pos{color:#1c7a55;} .strong{font-weight:700;}
+
+  /* 结论条 */
+  .concl{
+    border-left:3px solid var(--accent); background:var(--accent-soft);
+    padding:14px 18px; border-radius:0 6px 6px 0; font-size:14px; line-height:1.9;
+  }
+  .note{
+    border-left:3px solid #d9c8a3; background:var(--warn-soft);
+    padding:12px 16px; border-radius:0 6px 6px 0; font-size:13px; color:#5c4a24; line-height:1.8;
+  }
+  .foot{margin-top:34px; padding-top:18px; border-top:1px solid var(--line); font-size:12px; color:#8b96a5; line-height:1.9;}
+  ul{margin:6px 0 12px; padding-left:20px;}
+  li{font-size:14px; line-height:1.95; color:#2a3441; margin-bottom:4px;}
+  code{
+    font-family:Consolas,"Courier New",monospace; font-size:12.5px;
+    background:#f4f6f9; padding:1px 5px; border-radius:3px; color:#334;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="kicker">Quantitative Trading · Personal Project</div>
+  <h1>商品期货自动交易策略<br>1 分钟做单 · 5 分钟判状态 · 60 分钟定方向</h1>
+  <p class="lead">
+    一套以缠论结构（笔 → 中枢 → 买卖点）为主干、配合两阶段顶底分型确认与多层风控的期货自动交易系统。
+    行情采集与交易执行进程解耦，100+ 参数全部外置并通过 GUI 面板管理，支持状态持久化、日志滚动与异常恢复。
+  </p>
+
+  <div class="rule"></div>
+
+  <h2><span class="no">01</span>系统架构</h2>
+  <div class="flow">
+    <div class="frow">
+      <div class="node"><div class="t">行情采集进程</div><div class="d">独立运行 · 落库</div></div>
+      <div class="node"><div class="t">参数面板（GUI）</div><div class="d">编辑 · 启停 · 看日志</div></div>
+    </div>
+    <div class="arrow">▼</div>
+    <div class="frow">
+      <div class="node db" style="max-width:520px;margin:0 auto;"><div class="t">本地行情库 SQLite</div><div class="d">1min / 5min / 60min 分别落库 · 策略只读</div></div>
+    </div>
+    <div class="arrow">▼</div>
+    <div class="frow">
+      <div class="node hi"><div class="t">60 分钟</div><div class="d">MA20 趋势闸门<br>中枢方向判定</div></div>
+      <div class="node hi"><div class="t">5 分钟</div><div class="d">双态判定<br>震荡态 / 趋势态</div></div>
+      <div class="node hi"><div class="t">1 分钟</div><div class="d">笔 · 中枢 · 买卖点<br>分型确认</div></div>
+    </div>
+    <div class="arrow">▼</div>
+    <div class="frow">
+      <div class="node"><div class="t">开仓路由</div><div class="d">震荡态走博弈型 · 趋势态走确认型</div></div>
+    </div>
+    <div class="arrow">▼</div>
+    <div class="frow">
+      <div class="node"><div class="t">风控层</div><div class="d">单品种 / 板块 / 资金 / 单笔风险 / 涨跌停 / 流动性</div></div>
+    </div>
+    <div class="arrow">▼</div>
+    <div class="frow">
+      <div class="node"><div class="t">下单 · 跟踪 · 回写</div><div class="d">成交回执 · 状态文件 · 成交明细 · 微信推送</div></div>
+    </div>
+  </div>
+
+  <div class="rule"></div>
+
+  <h2><span class="no">02</span>核心设计</h2>
+  <div class="grid">
+    <div class="card">
+      <div class="h">笔与中枢 <span class="badge">缠论口径</span></div>
+      <p>以 MA20 划分涨跌段、连续 4 根收盘穿越确认新段，单笔至少 6 根 K 线；中枢取最近三笔重叠，<code>ZD=max(低)</code>、<code>ZG=min(高)</code>，支持延伸与扩展（级别升级后作废旧区间并冷却）。</p>
+    </div>
+    <div class="card">
+      <div class="h">状态机收敛 <span class="badge">去假信号</span></div>
+      <p>用“最近三笔的取值签名”去重，只有结构真的变化才推进中枢状态机，修掉了早期“每 12 分钟定时重建中枢”的假信号。</p>
+    </div>
+    <div class="card">
+      <div class="h">双态判定 <span class="badge">震荡 / 趋势</span></div>
+      <p>价格在箱体内 → 震荡态走“位置 + 分型”博弈；突破后用“新回抽笔是否回箱体”区分假突破；远离超过 N 倍箱高则直接判趋势，不再低吸高抛。</p>
+    </div>
+    <div class="card">
+      <div class="h">两阶段分型确认 <span class="badge">降低假突破</span></div>
+      <p>信号先挂起，等第 3 根起任一根收盘突破锚点才执行；期间跌破分型极值则作废。所有买卖点都必须通过这一步。</p>
+    </div>
+    <div class="card">
+      <div class="h">工程化 <span class="badge">可运维</span></div>
+      <p>配置自动生成带中文注释的模板、缺项自动回退；日志滚动；持仓状态持久化；主循环异常隔离，单品种异常不影响其他品种。</p>
+    </div>
+    <div class="card">
+      <div class="h">多层风控 <span class="badge">安全边界</span></div>
+      <p>单品种手数、板块持仓、可用资金比例、单笔风险占比、涨跌停距离、盘口流动性、收盘前禁止开仓与强制平仓、挂单超时重报。</p>
+    </div>
+  </div>
+
+  <div class="rule"></div>
+
+  <h2><span class="no">03</span>研究方法</h2>
+  <ul>
+    <li><b>无未来函数</b>：回放严格只用已收盘 K 线，指标与结构判定都滞后一根。</li>
+    <li><b>成交还原</b>：平仓行缺少开仓时间，按 FIFO 配对还原完整生命周期；修正午休空档导致的错误强平。</li>
+    <li><b>滑点归一</b>：回放与实盘存在系统性偏差，统一扣固定滑点后再比较，保证“相对比较”可信。</li>
+    <li><b>分层归因</b>：不看总盈亏，按开仓类型拆开看——这一步定位到了亏损的来源。</li>
+    <li><b>结构量化</b>：用全品种历史数据统计笔端点误差与中枢宽度分布，区分“笔的问题”与“级别的问题”。</li>
+    <li><b>过拟合自查</b>：参数网格中出现“全样本好、验证段崩”的组合直接弃用；小样本结论一律标注置信区间。</li>
+  </ul>
+
+  <div class="rule"></div>
+
+  <h2><span class="no">04</span>归因结论</h2>
+  <table>
+    <thead>
+      <tr><th>开仓类型</th><th>笔数</th><th>胜率</th><th>贡献</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>震荡低吸 / 高抛</td><td class="num">61</td><td class="num">41%</td><td class="neg">显著为负</td></tr>
+      <tr><td>确认型（二买 / 二卖 / 三买 / 三卖）</td><td class="num">38</td><td class="num">52.6%</td><td class="pos strong">为正，PF &gt; 1.5</td></tr>
+    </tbody>
+  </table>
+  <div class="concl">
+    结论：<b>砍掉震荡模块，保留确认型</b>，并给中枢增加“最小有效宽度”门槛——宽度不足的箱体视为噪音，不参与低吸高抛。
+  </div>
+
+  <div class="rule"></div>
+
+  <h2><span class="no">05</span>结构量化：窄箱体到底是谁的问题</h2>
+  <p class="muted">同一批全品种历史数据、5 分钟级别，用不同笔定义重建中枢，统计箱体宽度。</p>
+  <table>
+    <thead>
+      <tr><th>笔的定义</th><th>笔数</th><th>中枢中位宽度</th><th>≤10 点占比</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>MA20 笔（现用）</td><td class="num">5870</td><td class="num">13 点</td><td class="num">41.9%</td></tr>
+      <tr><td>缠论分型笔（严格）</td><td class="num">7210</td><td class="num">9 点</td><td class="num">56.4%</td></tr>
+      <tr><td>缠论分型笔（宽松）</td><td class="num">3784</td><td class="num">17 点</td><td class="num">29.7%</td></tr>
+      <tr><td><b>30 分钟级别（MA20）</b></td><td class="num">1042</td><td class="num strong">28 点</td><td class="num">10.4%</td></tr>
+    </tbody>
+  </table>
+  <div class="concl">
+    箱体过窄不是“笔算错了”，而是<b>级别</b>决定的：换笔只能从 13 点挪到 17 点，升到 30 分钟级别才能到 28 点。<br>
+    所以正确的修法是“提高箱体判定级别 / 加有效宽度门槛”，而不是重构笔。
+  </div>
+
+  <div class="rule"></div>
+
+  <h2><span class="no">06</span>结果与局限</h2>
+  <p>
+    模拟盘数据，样本 41 个交易日、99 笔平仓。归因后保留的“确认型”信号子样本：<b>38 笔，胜率 52.6%，盈亏比 1.55，单笔正期望</b>。
+  </p>
+  <div class="note">
+    局限：样本量偏小，胜率 95% 置信区间约 ±15 个百分点。上述结论仅用于策略取舍，不构成任何收益承诺。
+  </div>
+
+  <div class="foot">
+    技术与研究向个人项目 · 运行于模拟盘 · 不构成投资建议<br>
+    期货交易风险极高，实盘盈亏自负。行情与交易接口由 TqSdk 提供，使用须遵守其服务条款。
+  </div>
+</div>
+</body>
+</html>
