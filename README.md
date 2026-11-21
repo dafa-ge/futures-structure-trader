@@ -118,20 +118,26 @@ flowchart TD
 
 ---
 
-## 5. 目录结构（私有仓库）
+## 5. 代码说明（源码未公开）
 
-```
-.
-├── zszf1_strategy.py       # 主策略（1 分钟主循环 + 结构识别 + 风控 + 下单）
-├── config_loader.py        # 配置加载 / 模板生成 / 取值校验
-├── config_panel.py         # Tkinter 参数面板：编辑、保存、启停、看日志
-├── market_collector.py     # 独立行情采集进程
-├── replay_zhongshu.py      # 离线回放：验证中枢识别
-├── zszf1_backtest.py       # 离线回测引擎
-├── trade_stats.py          # 成交统计
-├── config.example.ini      # 脱敏配置模板（真实 config.ini 不入库）
-└── requirements.txt
-```
+本项目**仅公开文档与方法论**，源码不上传。
+
+原因：策略的具体实现——笔与中枢的判定细节、双态切换的阈值、分型确认的锚点规则——是作者在持续使用的交易逻辑，公开等同于放弃这套策略的有效性。这跟"没有代码"是两回事：工程结构和实现路径在下面列清楚，可以据此判断工程量级。
+
+以下为私有仓库的真实结构（约 5000 行 Python，7 个模块）：
+
+| 文件 | 职责 |
+|---|---|
+| `zszf1_strategy.py` | 主策略：1 分钟主循环、笔/中枢/买卖点识别、风控、下单与成交跟踪 |
+| `config_loader.py` | 配置加载：模板生成、类型校验、缺项回退 |
+| `config_panel.py` | Tkinter 参数面板：编辑、保存、启停、日志查看 |
+| `market_collector.py` | 独立行情采集进程，与策略解耦 |
+| `replay_zhongshu.py` | 离线回放：验证中枢形成、延伸、作废 |
+| `zszf1_backtest.py` | 离线回测引擎 |
+| `trade_stats.py` | 成交统计与分层归因 |
+
+需要交流实现思路可以联系作者（不提供源码）。
+
 
 ---
 
